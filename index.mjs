@@ -124,3 +124,6 @@ app.use((req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Ensure this line is at the end of your index.mjs
+export const analyzeApi = app;
