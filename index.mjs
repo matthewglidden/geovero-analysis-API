@@ -112,6 +112,14 @@ app.get('/analyze', async (req, res) => {
   }
 });
 
+app.use((req, res, next) => {
+  const apiKey = req.query.api_key || req.headers['authorization'];
+  if (apiKey !== process.env.AUTHORIZED_API_KEY) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  next();
+});
+
 // Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
