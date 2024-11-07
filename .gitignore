@@ -1,0 +1,16 @@
+# Node modules folder
+node_modules/
+
+# Environment variables file
+.env
+
+# Logs
+logs/
+*.log
+
+# MacOS system files
+.DS_Store
+
+# Lock files
+package-lock.json
+yarn.lock
