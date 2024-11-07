@@ -77,7 +77,7 @@ async function generateOpportunitiesWithAI(summary) {
 }
 
 // Main API route
-app.get('/analyze', async (req, res) => {
+app.get('/analyzeApi', async (req, res) => {
   const hotelName = req.query.hotel_name;
   if (!hotelName) {
     return res.status(400).json({ error: "Please provide a hotel name." });
