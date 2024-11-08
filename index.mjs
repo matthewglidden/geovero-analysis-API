@@ -46,6 +46,65 @@ async function getCompetitors(location) {
   })).slice(0, 5); // Limit to top 5 competitors
 }
 
+// Function to get nearby amenities
+async function getNearbyAmenities(location) {
+  const types = ['restaurant', 'cafe', 'tourist_attraction']; // Add relevant types
+  const radius = 500; // 500 meters radius for a "walkable" area
+
+  const amenities = {};
+
+  for (const type of types) {
+    const searchUrl = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.latitude},${location.longitude}&radius=${radius}&type=${type}&key=${PLACES_API_KEY}`;
+    const response = await axios.get(searchUrl);
+    const data = response.data;
+
+    amenities[type] = data.results.map(place => ({
+      name: place.name,
+      rating: place.rating,
+      userRatingsTotal: place.user_ratings_total,
+      address: place.vicinity
+    })).slice(0, 5); // Limit to top 5 places of each type
+  }
+
+  return amenities;
+}
+
+// Function to analyze nearby amenities and generate recommendations
+function analyzeAmenities(amenities) {
+  const analysis = {
+    highlights: [],
+    recommendations: []
+  };
+
+  // Loop through each type of amenity
+  for (const type in amenities) {
+    const places = amenities[type];
+
+    if (places.length > 0) {
+      // Sort places by rating to find the top-rated place
+      const topRated = places.sort((a, b) => b.rating - a.rating)[0];
+      analysis.highlights.push({
+        type,
+        topPlace: {
+          name: topRated.name,
+          rating: topRated.rating,
+          address: topRated.address
+        },
+        count: places.length
+      });
+
+      // Generate a simple recommendation based on the type and availability
+      if (topRated.rating >= 4) {
+        analysis.recommendations.push(`Highlight nearby ${type} options, such as ${topRated.name} with a rating of ${topRated.rating}.`);
+      } else if (places.length < 3) {
+        analysis.recommendations.push(`Consider enhancing ${type} options or recommending hotel amenities, as nearby options are limited.`);
+      }
+    }
+  }
+
+  return analysis;
+}
+
 // Function to get details and reviews for each competitor
 async function getHotelDetails(placeId) {
   const detailsUrl = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${placeId}&fields=name,rating,reviews,formatted_address&key=${PLACES_API_KEY}`;
@@ -90,7 +149,13 @@ app.get('/analyzeApi', async (req, res) => {
     // Step 2: Get competitors around the main hotel
     const competitors = await getCompetitors(hotel.location);
 
-    // Step 3: Get details and insights for each competitor
+    // Step 3: Get nearby amenities around the main hotel
+    const nearbyAmenities = await getNearbyAmenities(hotel.location);
+
+    // Step 4: Analyze nearby amenities and generate recommendations
+    const amenitiesAnalysis = analyzeAmenities(nearbyAmenities);
+
+    // Step 5: Get details and insights for each competitor
     for (const competitor of competitors) {
       const details = await getHotelDetails(competitor.placeId);
       competitor.address = details.address;
@@ -104,8 +169,8 @@ app.get('/analyzeApi', async (req, res) => {
       competitor.opportunities = await generateOpportunitiesWithAI(summary);
     }
 
-    // Step 4: Return the results as JSON
-    res.json({ hotel, competitors });
+    // Step 6: Return the results as JSON
+    res.json({ hotel, competitors, nearbyAmenities, amenitiesAnalysis });
   } catch (error) {
     console.error("Error processing request:", error);
     res.status(500).json({ error: error.message });

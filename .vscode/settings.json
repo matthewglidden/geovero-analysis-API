@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "undefined/subscriptions/7b129ae7-3286-42bd-b17b-a2bb24f70d15/resourceGroups/rgGeoVero/providers/Microsoft.Web/sites/geovero-hotel-analysis-api",
+    "appService.deploySubpath": "."
+}
